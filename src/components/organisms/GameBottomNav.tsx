@@ -136,8 +136,6 @@ const MultiPlayerModalContent: React.FC<{
   Object.keys(playerScore).forEach((key, index) => {
     if (playerScore[key] > highestScore) {
       highestScore = playerScore[key];
-    } else {
-      itsTie = true;
     }
 
     playerScoreArr.push({
@@ -149,6 +147,13 @@ const MultiPlayerModalContent: React.FC<{
   playerScoreArr.sort((a, b) => {
     return b.score - a.score;
   });
+
+  if (
+    playerScoreArr.length &&
+    playerScoreArr[0].score === playerScoreArr[1].score
+  ) {
+    itsTie = true;
+  }
 
   return (
     <StyledModalContent>
