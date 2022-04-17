@@ -30,6 +30,7 @@ const Game: React.FC = () => {
   const { gameConfig } = location.state as LocationState;
   const [currentPlayer, setCurrentPlayer] = useState(1);
   const [playerScore, setPlayerScore] = useState<playersScoreType>({});
+  const [resultVisible, setResultVisible] = useState(false);
 
   //init player score
   useEffect(() => {
@@ -55,6 +56,7 @@ const Game: React.FC = () => {
     <StyledContainer>
       <GameTopNav />
       <GameBoard
+        showResultModal={setResultVisible}
         setPlayer={setPlayerHandler}
         currentPlayer={currentPlayer}
         setPlayerScore={setPlayerScoreHandler}
@@ -62,7 +64,11 @@ const Game: React.FC = () => {
         timeToNormalise={200}
         timeToHide={3}
       />
-      <GameBottomNav currentPlayer={currentPlayer} playerScore={playerScore} />
+      <GameBottomNav
+        currentPlayer={currentPlayer}
+        playerScore={playerScore}
+        showResult={resultVisible}
+      />
     </StyledContainer>
   );
 };

@@ -15,7 +15,7 @@ const StyledDiv = styled.div`
   background-color: rgba(0, 0, 0, 0.5);
   display: none;
 
-  &.isShow {
+  &.active {
     display: block;
   }
 

@@ -15,6 +15,7 @@ interface PropsType {
   };
   timeToNormalise: number;
   timeToHide: number;
+  showResultModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface LocationState {
@@ -52,6 +53,7 @@ const GameBoard: React.FC<PropsType> = ({
   currentPlayer,
   setPlayerScore,
   playerScore,
+  showResultModal,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,6 +61,8 @@ const GameBoard: React.FC<PropsType> = ({
   const { gameConfig } = location.state as LocationState;
   const col = gameConfig.grid || 4;
   const numberToRandomize = (col * col) / 2;
+
+  const matchedPieceCount = useRef(0);
 
   const piecesRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [selectedPieces, setSelectedPieces] = useState<HTMLButtonElement[]>([]);
@@ -104,11 +108,12 @@ const GameBoard: React.FC<PropsType> = ({
       const revealIntervalPtr = setInterval(() => {
         setCountDown(countDown - 1);
       }, 1000);
+
       return () => clearInterval(revealIntervalPtr);
     } else {
       showHidePieces(false, piecesValue);
     }
-  }, [countDown]);
+  }, [countDown, piecesValue]);
 
   //update board pieces once items are selected
   useEffect(() => {
@@ -138,10 +143,26 @@ const GameBoard: React.FC<PropsType> = ({
       }
 
       if (gameConfig.players === 1) {
-        setPlayerScore(
-          playerScore[`player${currentPlayer}`] + 1,
-          `player${currentPlayer}`
-        );
+        if (selectedPieces[0].innerHTML !== selectedPieces[1].innerHTML) {
+          setPlayerScore(
+            playerScore[`player${currentPlayer}`] + 1,
+            `player${currentPlayer}`
+          );
+        } else {
+          isCorrect = true;
+
+          selectedPieces.forEach((element) => {
+            element.classList.add("active");
+          });
+        }
+      }
+
+      if (isCorrect) {
+        matchedPieceCount.current += 1;
+
+        if (matchedPieceCount.current === numberToRandomize) {
+          showResultModal(true);
+        }
       }
 
       setTimeout(() => {
@@ -160,6 +181,7 @@ const GameBoard: React.FC<PropsType> = ({
     selectedPieces,
     currentPlayer,
     gameConfig.players,
+    gameConfig.timeToNormalise,
     playerScore,
     setPlayer,
     setPlayerScore,

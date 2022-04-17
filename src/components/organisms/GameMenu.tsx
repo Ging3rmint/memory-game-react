@@ -81,13 +81,17 @@ const GameMenu: React.FC = () => {
     players: 1,
     grid: 4,
     timeToNormalise: 200,
-    timeToStart: 3,
+    timeToStart: 5,
     gameTimer: 120,
   });
 
   const onButtonClickHandler = (key: string, config: number | string) => {
     if (key === "grid" && typeof config === "number" && config > 4) {
-      setGameConfig({ ...gameConfig, timeToStart: 4, [key]: config });
+      setGameConfig({
+        ...gameConfig,
+        timeToStart: gameConfig.timeToStart + 5,
+        [key]: config,
+      });
     } else {
       setGameConfig({ ...gameConfig, [key]: config });
     }

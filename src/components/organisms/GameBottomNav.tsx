@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import React, { useEffect, useState, useRef } from "react";
+import { useLocation, useNavigate } from "react-router";
 import styled from "styled-components";
+import { colors } from "../../constants";
 
+import PillButton from "../atoms/PillButton";
 import Player from "../molecules/Player";
 import SinglePlayer from "../molecules/SinglePlayer";
+import Modal from "../molecules/Modal";
 
 interface PropsType {
+  showResult: boolean;
   currentPlayer?: number;
   playerScore: {
     [propName: string]: number;
@@ -34,15 +38,208 @@ const StyledNav = styled.nav`
   margin: 0 auto;
 `;
 
-const GameBottomNav: React.FC<PropsType> = ({ currentPlayer, playerScore }) => {
+const StyledModalContent = styled.div`
+  text-align: center;
+
+  > h2 {
+    color: ${colors.charcoal};
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  > p {
+    color: ${colors.shadowBlue};
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 40px;
+  }
+
+  .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: ${colors.gray};
+    padding: 17px 32px;
+    width: 542px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+
+    &.highlight {
+      background-color: ${colors.charcoal};
+      span {
+        &:first-of-type,
+        &:last-of-type {
+          color: ${colors.lotion};
+        }
+      }
+    }
+
+    span {
+      font-weight: 700;
+
+      &:first-of-type {
+        color: ${colors.shadowBlue};
+        font-size: 18px;
+      }
+
+      &:last-of-type {
+        color: ${colors.yankeesBlue};
+        font-size: 32px;
+      }
+    }
+  }
+
+  .button-group {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+
+    .btn {
+      width: 264px;
+      font-weight: 700;
+      font-size: 20px;
+
+      &--restart {
+        background-color: ${colors.tangerine};
+        color: ${colors.lotion};
+
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+
+      &--new {
+        background-color: ${colors.gray};
+        color: ${colors.yankeesBlue};
+
+        &:hover {
+          background-color: ${colors.lakeBlue};
+          color: ${colors.lotion};
+        }
+      }
+    }
+  }
+`;
+
+const MultiPlayerModalContent: React.FC<{
+  navigate: any;
+  playerScore: {
+    [propName: string]: any;
+  };
+}> = ({ navigate, playerScore }) => {
+  //playerScore state changes and re-renders this component, does not require useState
+  const playerScoreArr: { player: string; score: number }[] = [];
+  let highestScore = 0;
+  let itsTie = false;
+
+  Object.keys(playerScore).forEach((key, index) => {
+    if (playerScore[key] > highestScore) {
+      highestScore = playerScore[key];
+    } else {
+      itsTie = true;
+    }
+
+    playerScoreArr.push({
+      player: `Player ${index + 1}`,
+      score: playerScore[key],
+    });
+  });
+
+  playerScoreArr.sort((a, b) => {
+    return b.score - a.score;
+  });
+
+  return (
+    <StyledModalContent>
+      {playerScoreArr.length && (
+        <h2>{itsTie ? "Its a tie!" : `${playerScoreArr[0].player} Wins!`}</h2>
+      )}
+      <p>Game over! Here are the results...</p>
+      {playerScoreArr.length &&
+        playerScoreArr.map((player) => {
+          return (
+            <div
+              className={`row ${
+                player.score === highestScore ? "highlight" : ""
+              }`}
+            >
+              <span>
+                {player.player}{" "}
+                {player.score === highestScore ? "(Winner!)" : ""}
+              </span>
+              <span>{player.score} Pairs</span>
+            </div>
+          );
+        })}
+
+      <div className='button-group'>
+        <PillButton
+          className='btn btn--restart'
+          text='Restart'
+          onClick={() => window.location.reload()}
+        />
+        <PillButton
+          className='btn btn--new'
+          text='Setup New Game'
+          onClick={() => navigate("/")}
+        />
+      </div>
+    </StyledModalContent>
+  );
+};
+
+const SinglePlayerModalContent: React.FC<{
+  navigate: any;
+  timeElapsed: string;
+  moves: number;
+  title: string;
+}> = ({ navigate, timeElapsed, moves, title }) => {
+  return (
+    <StyledModalContent>
+      <h2>{title}</h2>
+      <p>Game over! Here's how you got on...</p>
+      <div className='row'>
+        <span>Time Elapsed</span>
+        <span>{timeElapsed}</span>
+      </div>
+      <div className='row'>
+        <span>Moves Taken</span>
+        <span>{moves} Moves</span>
+      </div>
+      <div className='button-group'>
+        <PillButton
+          className='btn btn--restart'
+          text='Restart'
+          onClick={() => window.location.reload()}
+        />
+        <PillButton
+          className='btn btn--new'
+          text='Setup New Game'
+          onClick={() => navigate("/")}
+        />
+      </div>
+    </StyledModalContent>
+  );
+};
+const GameBottomNav: React.FC<PropsType> = ({
+  currentPlayer,
+  playerScore,
+  showResult,
+}) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const gameCountUp = useRef(0);
+  const gameOverTitle = useRef("You did it!");
+  const gameCounterPtr = useRef<NodeJS.Timer>();
 
   const { gameConfig } = location.state as LocationState;
   const [timeToStart, setTimeToStart] = useState(gameConfig.timeToStart);
   const [gameCountDown, setGameCountDown] = useState(gameConfig.gameTimer);
   const [gameTimer, setGameTimer] = useState("0:00");
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const setUpDisplayTime = (timer: number) => {
+  const getTimeDisplay = (timer: number) => {
     let timeInMinutes = Math.floor(timer / 60);
     let timeInSeconds: number | string = timer - timeInMinutes * 60;
 
@@ -50,11 +247,21 @@ const GameBottomNav: React.FC<PropsType> = ({ currentPlayer, playerScore }) => {
       timeInSeconds = `0${timeInSeconds}`;
     }
 
-    setGameTimer(`${timeInMinutes}:${timeInSeconds}`);
+    return `${timeInMinutes}:${timeInSeconds}`;
   };
 
   useEffect(() => {
-    setUpDisplayTime(gameCountDown);
+    if (gameCounterPtr.current && showResult) {
+      clearInterval(gameCounterPtr.current);
+    }
+  }, [showResult]);
+
+  useEffect(() => {
+    if (gameConfig.players > 1) {
+      return;
+    }
+
+    setGameTimer(getTimeDisplay(gameCountDown));
 
     if (timeToStart > 0) {
       const waitTimePtr = setInterval(() => {
@@ -62,14 +269,26 @@ const GameBottomNav: React.FC<PropsType> = ({ currentPlayer, playerScore }) => {
       }, 1000);
 
       return () => clearInterval(waitTimePtr);
-    }
-
-    if (gameCountDown > 0 && timeToStart <= 0) {
+    } else if (gameCountDown > 0) {
       const gameTimerPtr = setInterval(() => {
         setGameCountDown(gameCountDown - 1);
+        gameCountUp.current = gameCountUp.current + 1;
       }, 1000);
 
-      return () => clearInterval(gameTimerPtr);
+      gameCounterPtr.current = gameTimerPtr;
+
+      return () => {
+        if (gameCounterPtr.current) {
+          clearInterval(gameCounterPtr.current);
+        }
+      };
+    } else {
+      gameOverTitle.current = "Game Over!";
+      if (gameCounterPtr.current) {
+        clearInterval(gameCounterPtr.current);
+      }
+
+      setModalVisible(true);
     }
   }, [gameCountDown, timeToStart]);
 
@@ -89,6 +308,22 @@ const GameBottomNav: React.FC<PropsType> = ({ currentPlayer, playerScore }) => {
       ) : (
         <SinglePlayer playerScore={playerScore["player1"]} timer={gameTimer} />
       )}
+
+      <Modal isShow={modalVisible || showResult}>
+        {gameConfig.players > 1 ? (
+          <MultiPlayerModalContent
+            navigate={navigate}
+            playerScore={playerScore}
+          />
+        ) : (
+          <SinglePlayerModalContent
+            navigate={navigate}
+            timeElapsed={getTimeDisplay(gameCountUp.current)}
+            moves={playerScore["player1"]}
+            title={gameOverTitle.current}
+          />
+        )}
+      </Modal>
     </StyledNav>
   );
 };
