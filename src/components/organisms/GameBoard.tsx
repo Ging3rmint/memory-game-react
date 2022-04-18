@@ -1,9 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { generateRandomNumbers, arrayShuffler } from "../../utils/randomizer";
-import { colors } from "../../constants";
+import {
+  generateRandomNumbers,
+  arrayShuffler,
+  getShuffledIcons,
+} from "../../utils/randomizer";
+import { colors, breakpoints } from "../../constants";
 import styled from "styled-components";
-
 import Piece from "../atoms/Piece";
 
 interface PropsType {
@@ -44,6 +47,10 @@ const StyledSection = styled.section`
 
     > button {
       margin: 10px;
+
+      @media (max-width: ${breakpoints.bpLgMobile}px) {
+        margin: 5px;
+      }
     }
   }
 `;
@@ -60,47 +67,52 @@ const GameBoard: React.FC<PropsType> = ({
 
   const { gameConfig } = location.state as LocationState;
   const col = gameConfig.grid || 4;
-  const numberToRandomize = (col * col) / 2;
+  const totalUniquePieces = (col * col) / 2;
 
-  const matchedPieceCount = useRef(0);
-
-  const piecesRef = useRef<(HTMLButtonElement | null)[]>([]);
-  const [selectedPieces, setSelectedPieces] = useState<HTMLButtonElement[]>([]);
-  const [piecesValue, setPiecesValue] = useState<number[]>([]);
+  const matchedPiecesParams = useRef<{ [propName: string]: any }[]>([]);
+  const [piecesParams, setPiecesParams] = useState<
+    { [propName: string]: any }[]
+  >([]);
   const [countDown, setCountDown] = useState(gameConfig.timeToStart);
+  const [showAnswers, setShowAnswers] = useState(false);
 
-  //using DOM to render value onto the pieces without changing state
-  const showHidePieces = (show: boolean, pieces: number[]) => {
-    if (piecesRef.current.length) {
-      piecesRef.current.forEach((element, index) => {
-        if (element) {
-          if (show) {
-            element.classList.add("active");
-            element.innerHTML = pieces[index].toString();
-          } else {
-            element.classList.remove("active");
-            element.classList.remove("selected");
-            element.innerHTML = "";
-          }
-        }
+  //setup pieces object parameter
+  useEffect(() => {
+    let randomValuesArr: any[] = [];
+    const randomNumberArrObj: { [propName: string]: any }[] = [];
+
+    if (!gameConfig) {
+      //if gameConfig is not available, return user to menu screen
+      navigate("/");
+    } else if (gameConfig.theme === "numbers") {
+      const halfPieces = generateRandomNumbers(totalUniquePieces);
+      randomValuesArr = arrayShuffler([...halfPieces, ...halfPieces]);
+
+      randomValuesArr.forEach((value: any, index: number) => {
+        randomNumberArrObj.push({
+          id: index,
+          text: value,
+          isShow: false,
+          isReveal: false,
+        });
+      });
+    } else if (gameConfig.theme === "icons") {
+      randomValuesArr = getShuffledIcons(col);
+
+      randomValuesArr.forEach((value: any, index: number) => {
+        randomNumberArrObj.push({
+          id: index,
+          icon: value,
+          isShow: false,
+          isReveal: false,
+        });
       });
     }
-  };
 
-  //if gameConfig is not available, return user to menu screen
-  useEffect(() => {
-    if (!gameConfig) {
-      navigate("/");
-    } else {
-      const halfPieces = generateRandomNumbers(numberToRandomize);
-      setPiecesValue(arrayShuffler([...halfPieces, ...halfPieces]));
-    }
-  }, [gameConfig, navigate, numberToRandomize]);
-
-  //after values of the pieces are calculated, reveal them for a short period
-  useEffect(() => {
-    showHidePieces(true, piecesValue);
-  }, [piecesValue]);
+    setPiecesParams(randomNumberArrObj);
+    //reveal all pieces
+    setShowAnswers(true);
+  }, [gameConfig, navigate, totalUniquePieces, col]);
 
   //setup countdown timer to hide pieces
   useEffect(() => {
@@ -111,30 +123,52 @@ const GameBoard: React.FC<PropsType> = ({
 
       return () => clearInterval(revealIntervalPtr);
     } else {
-      showHidePieces(false, piecesValue);
+      setShowAnswers(false);
     }
-  }, [countDown, piecesValue]);
+  }, [countDown]);
 
-  //update board pieces once items are selected
-  useEffect(() => {
-    if (selectedPieces.length >= 2) {
-      let isCorrect = false;
+  const onPieceClickHandler = (
+    id: number,
+    revealed: boolean,
+    isShown: boolean
+  ) => {
+    if (showAnswers || revealed || isShown) {
+      return;
+    }
 
-      if (
-        selectedPieces[0].innerHTML === selectedPieces[1].innerHTML &&
-        gameConfig.players > 1
-      ) {
-        isCorrect = true;
+    let shownPieces: { [propName: string]: any }[] = [];
+    const newPiecesParams = [...piecesParams];
 
-        setPlayerScore(
-          playerScore[`player${currentPlayer}`] + 1,
-          `player${currentPlayer}`
-        );
+    newPiecesParams.map((param) => {
+      const matchedPieceIndex = matchedPiecesParams.current.findIndex(
+        (matched) => matched.id === param.id
+      );
 
-        selectedPieces.forEach((element) => {
-          element.classList.add("active");
-        });
-      } else if (gameConfig.players > 1) {
+      if (param.isShow && matchedPieceIndex < 0) {
+        shownPieces.push(param);
+      }
+
+      if (param.id === id) {
+        shownPieces.push(param);
+        param.isShow = true;
+      }
+      return param;
+    });
+
+    setPiecesParams(newPiecesParams);
+    let valueKey = "text";
+
+    if (gameConfig.theme === "icons") valueKey = "icon";
+
+    if (
+      shownPieces.length === 2 &&
+      !shownPieces.every(
+        (piece) => piece[valueKey] === shownPieces[0][valueKey]
+      )
+    ) {
+      if (gameConfig.players === 1) {
+        setPlayerScore(playerScore["player1"] + 1, "player1");
+      } else {
         if (currentPlayer >= gameConfig.players) {
           setPlayer(1);
         } else {
@@ -142,59 +176,53 @@ const GameBoard: React.FC<PropsType> = ({
         }
       }
 
-      if (gameConfig.players === 1) {
-        if (selectedPieces[0].innerHTML !== selectedPieces[1].innerHTML) {
-          setPlayerScore(
-            playerScore[`player${currentPlayer}`] + 1,
-            `player${currentPlayer}`
-          );
-        } else {
-          isCorrect = true;
-
-          selectedPieces.forEach((element) => {
-            element.classList.add("active");
-          });
-        }
-      }
-
-      if (isCorrect) {
-        matchedPieceCount.current += 1;
-
-        if (matchedPieceCount.current === numberToRandomize) {
-          showResultModal(true);
-        }
-      }
-
       setTimeout(() => {
-        selectedPieces[0].classList.remove("selected");
-        selectedPieces[1].classList.remove("selected");
+        newPiecesParams.map((param) => {
+          const matchedPieceIndex = matchedPiecesParams.current.findIndex(
+            (matched) => matched.id === param.id
+          );
 
-        if (!isCorrect) {
-          selectedPieces[0].innerHTML = "";
-          selectedPieces[1].innerHTML = "";
-        }
+          if (matchedPieceIndex < 0) {
+            param.isShow = false;
+          }
+
+          return param;
+        });
+
+        //spread to change pointer which triggers state change
+        setPiecesParams([...newPiecesParams]);
       }, gameConfig.timeToNormalise);
+    } else if (
+      shownPieces.length === 2 &&
+      shownPieces.every((piece) => piece[valueKey] === shownPieces[0][valueKey])
+    ) {
+      if (gameConfig.players > 1) {
+        setPlayerScore(
+          playerScore[`player${currentPlayer}`] + 1,
+          `player${currentPlayer}`
+        );
+      }
 
-      setSelectedPieces([]);
-    }
-  }, [
-    selectedPieces,
-    currentPlayer,
-    gameConfig.players,
-    gameConfig.timeToNormalise,
-    playerScore,
-    setPlayer,
-    setPlayerScore,
-  ]);
+      //reveal the piece permanently
+      newPiecesParams.map((param) => {
+        if (param.id === shownPieces[0].id || param.id === shownPieces[1].id) {
+          param.isShow = false;
+          param.isReveal = true;
+        }
+        return param;
+      });
 
-  const onPieceClickHandler = (id: number) => {
-    const targetElement = piecesRef.current[id];
-    const number = piecesValue[id];
+      //add revealed pieces into persistent var
+      shownPieces.forEach((piece) => {
+        matchedPiecesParams.current.push(piece);
+      });
 
-    if (targetElement && !targetElement.classList.contains("active")) {
-      setSelectedPieces([...selectedPieces, targetElement]);
-      targetElement.classList.add("selected");
-      targetElement.innerHTML = number.toString();
+      //show result modal if matchedPieces = total  unqiue pieces
+      if (matchedPiecesParams.current.length / 2 >= totalUniquePieces) {
+        showResultModal(true);
+      }
+
+      setPiecesParams([...newPiecesParams]);
     }
   };
 
@@ -203,27 +231,38 @@ const GameBoard: React.FC<PropsType> = ({
       {countDown > 0 && (
         <h2 className='timer'>Game starting in... {countDown}</h2>
       )}
-      {piecesValue.length
+
+      {piecesParams.length
         ? [...Array(col)].map((e, i) => {
             return (
               <div key={i} className='row'>
-                {piecesValue
-                  .filter((ele, index) => {
-                    return index >= i * col && index < i * col + col;
-                  })
-                  .map((number: number, index: number) => {
-                    const rowIndex = i * col + index;
-                    return (
-                      <Piece
-                        pieceRef={(ref: HTMLButtonElement) =>
-                          (piecesRef.current[rowIndex] = ref)
-                        }
-                        key={index}
-                        id={rowIndex}
-                        onClick={() => onPieceClickHandler(rowIndex)}
-                      />
-                    );
-                  })}
+                {piecesParams.length &&
+                  piecesParams
+                    .filter((object, index: number) => {
+                      return index >= i * col && index < i * col + col;
+                    })
+                    .map((object, index: number) => {
+                      const rowIndex = i * col + index;
+
+                      return (
+                        <Piece
+                          key={index}
+                          id={rowIndex}
+                          isBig={gameConfig.grid === 4}
+                          isReveal={showAnswers || object.isReveal}
+                          isShow={object.isShow}
+                          text={object.text ? object.text : ""}
+                          iconName={object.icon ? object.icon : null}
+                          onClick={() =>
+                            onPieceClickHandler(
+                              rowIndex,
+                              object.isReveal,
+                              object.isShow
+                            )
+                          }
+                        />
+                      );
+                    })}
               </div>
             );
           })

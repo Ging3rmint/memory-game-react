@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import { forwardRef } from "react";
 import styled from "styled-components";
-import { colors } from "../../constants";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { colors, breakpoints } from "../../constants";
 
 interface PropsType {
   pieceRef?: any;
   id?: number;
   text?: string | number;
-  className?: string;
   onClick?: () => void;
+  iconName?: IconProp;
+  isShow?: boolean;
+  isReveal?: boolean;
+  isBig?: boolean;
 }
 const StyledButton = styled.button`
   width: 82px;
@@ -19,6 +24,23 @@ const StyledButton = styled.button`
   border: none;
   cursor: pointer;
   background-color: ${colors.yankeesBlue};
+
+  @media (max-width: ${breakpoints.bpLgMobile}px) {
+    width: 47px;
+    height: 47px;
+    font-size: 24px;
+  }
+
+  &.large {
+    width: 118px;
+    height: 118px;
+
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      width: 72px;
+      height: 72px;
+      font-size: 40px;
+    }
+  }
 
   &.selected {
     background-color: ${colors.tangerine};
@@ -33,13 +55,33 @@ const StyledButton = styled.button`
     cursor: default;
   }
 `;
+const Piece = forwardRef<HTMLButtonElement, PropsType>(
+  ({ text, onClick, iconName, isShow, isReveal, isBig }, ref) => {
+    return (
+      <StyledButton
+        ref={ref}
+        className={`${isReveal ? "active" : isShow ? "selected" : ""} ${
+          isBig ? "large" : ""
+        }`}
+        onClick={onClick}
+      >
+        {(isShow || isReveal) && text && <span>{text}</span>}
+        {(isShow || isReveal) && iconName && (
+          <FontAwesomeIcon icon={iconName} />
+        )}
+      </StyledButton>
+    );
+  }
+);
+// const Piece = forwardRef<HTMLButtonElement, PropsType>({
+//   text,
+//   isActive,
+//   onClick,
+//   pieceRef,
+//   iconName,
+//   isShow,
+// }, ref) => {
 
-const Piece: React.FC<PropsType> = ({ text, className, onClick, pieceRef }) => {
-  return (
-    <StyledButton ref={pieceRef} className={className} onClick={onClick}>
-      {text}
-    </StyledButton>
-  );
-};
+// };
 
 export default Piece;

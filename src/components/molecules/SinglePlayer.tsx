@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { colors } from "../../constants";
+import { colors, breakpoints } from "../../constants";
 
 interface PropsType {
   playerScore: number;
@@ -26,17 +26,32 @@ const StyledDiv = styled.div`
       margin-right: 0;
     }
 
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      display: block;
+      text-align: center;
+      width: 151px;
+    }
+
     span {
       font-weight: 700;
 
       &:first-of-type {
         color: ${colors.shadowBlue};
         font-size: 18px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          font-size: 15px;
+        }
       }
 
       &:last-of-type {
         color: ${colors.yankeesBlue};
         font-size: 32px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          display: block;
+          font-size: 24px;
+        }
       }
     }
   }

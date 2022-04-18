@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { colors } from "../../constants";
+import { colors, breakpoints } from "../../constants";
 import { useNavigate } from "react-router";
 import PillButton from "../atoms/PillButton";
 
@@ -12,6 +12,12 @@ const StyledSection = styled.section`
   border-radius: 20px;
   background-color: ${colors.lotion};
 
+  @media (max-width: ${breakpoints.bpLgMobile}px) {
+    width: 327px;
+    padding: 24px;
+    margin-top: 45px;
+  }
+
   > p {
     color: ${colors.shadowBlue};
     font-size: 20px;
@@ -21,6 +27,10 @@ const StyledSection = styled.section`
 
     &:first-of-type {
       margin-top: 0;
+    }
+
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      font-size: 15px;
     }
   }
 
@@ -34,6 +44,10 @@ const StyledSection = styled.section`
       background-color: ${colors.yankeesBlue};
     }
 
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      font-size: 16px;
+    }
+
     &.btn {
       // transition: all 0.3s ease-in-out;
 
@@ -41,10 +55,18 @@ const StyledSection = styled.section`
       &--theme,
       &--icon {
         width: 256px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          width: 134px;
+        }
       }
 
       &--number {
         width: 119px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          width: 62px;
+        }
       }
 
       &--grid,
@@ -81,7 +103,7 @@ const GameMenu: React.FC = () => {
     players: 1,
     grid: 4,
     timeToNormalise: 200,
-    timeToStart: 5,
+    timeToStart: 3,
     gameTimer: 120,
   });
 

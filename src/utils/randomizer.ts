@@ -1,3 +1,24 @@
+import {
+  faBug,
+  faFutbol,
+  faCar,
+  faSnowflake,
+  faLiraSign,
+  faMoon,
+  faHand,
+  faSun,
+  faFlask,
+  faAnchor,
+  faShip,
+  faShirt,
+  faStar,
+  faTrophy,
+  faEarth,
+  faVirus,
+  faSyringe,
+  faPlane,
+} from "@fortawesome/free-solid-svg-icons";
+
 export const generateRandomNumbers = (numberToGenerate: number) => {
   let arr = [];
   while (arr.length < numberToGenerate) {
@@ -7,7 +28,34 @@ export const generateRandomNumbers = (numberToGenerate: number) => {
   return arr;
 };
 
-export const arrayShuffler = (array: number[]) => {
+export const getShuffledIcons = (grid: number) => {
+  const numberOfIconsRequired = (grid * grid) / 2;
+  const icons = [
+    faBug,
+    faFutbol,
+    faCar,
+    faSnowflake,
+    faLiraSign,
+    faMoon,
+    faHand,
+    faSun,
+    faFlask,
+    faAnchor,
+    faShip,
+    faShirt,
+    faStar,
+    faTrophy,
+    faEarth,
+    faVirus,
+    faSyringe,
+    faPlane,
+  ];
+  const selectedIcons = icons.slice(0, numberOfIconsRequired);
+
+  return arrayShuffler([...selectedIcons, ...selectedIcons]);
+};
+
+export const arrayShuffler = (array: any) => {
   let currentIndex = array.length,
     randomIndex;
 

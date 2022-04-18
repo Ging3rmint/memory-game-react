@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import styled from "styled-components";
-import { colors } from "../../constants";
+import { colors, breakpoints } from "../../constants";
+import { getWindowDimension } from "../../utils/windowDimension";
 
 import PillButton from "../atoms/PillButton";
 import Player from "../molecules/Player";
@@ -45,6 +46,11 @@ const StyledModalContent = styled.div`
     color: ${colors.charcoal};
     font-size: 48px;
     margin-bottom: 16px;
+
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      font-size: 24px;
+      margin-bottom: 9px;
+    }
   }
 
   > p {
@@ -52,6 +58,10 @@ const StyledModalContent = styled.div`
     font-size: 18px;
     font-weight: 700;
     margin-bottom: 40px;
+
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      font-size: 14px;
+    }
   }
 
   .row {
@@ -74,17 +84,32 @@ const StyledModalContent = styled.div`
       }
     }
 
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      width: 279px;
+      padding: 11px 16px;
+      margin-bottom: 8px;
+      border-radius: 5px;
+    }
+
     span {
       font-weight: 700;
 
       &:first-of-type {
         color: ${colors.shadowBlue};
         font-size: 18px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          font-size: 13px;
+        }
       }
 
       &:last-of-type {
         color: ${colors.yankeesBlue};
         font-size: 32px;
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          font-size: 20px;
+        }
       }
     }
   }
@@ -95,10 +120,19 @@ const StyledModalContent = styled.div`
     justify-content: space-between;
     margin-top: 40px;
 
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      display: block;
+      margin-top: 20px;
+    }
+
     .btn {
       width: 264px;
       font-weight: 700;
       font-size: 20px;
+
+      @media (max-width: ${breakpoints.bpLgMobile}px) {
+        font-size: 18px;
+      }
 
       &--restart {
         background-color: ${colors.tangerine};
@@ -106,6 +140,10 @@ const StyledModalContent = styled.div`
 
         &:hover {
           opacity: 0.8;
+        }
+
+        @media (max-width: ${breakpoints.bpLgMobile}px) {
+          margin-bottom: 16px;
         }
       }
 
@@ -128,7 +166,7 @@ const MultiPlayerModalContent: React.FC<{
     [propName: string]: any;
   };
 }> = ({ navigate, playerScore }) => {
-  //playerScore state changes and re-renders this component, does not require useState
+  //modal is already mounted. playerScore is a state which re-renders the variables
   const playerScoreArr: { player: string; score: number }[] = [];
   let highestScore = 0;
   let itsTie = false;
@@ -165,6 +203,7 @@ const MultiPlayerModalContent: React.FC<{
         playerScoreArr.map((player) => {
           return (
             <div
+              key={player.player}
               className={`row ${
                 player.score === highestScore ? "highlight" : ""
               }`}
@@ -244,6 +283,19 @@ const GameBottomNav: React.FC<PropsType> = ({
   const [gameTimer, setGameTimer] = useState("0:00");
   const [modalVisible, setModalVisible] = useState(false);
 
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimension()
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions(getWindowDimension());
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const getTimeDisplay = (timer: number) => {
     let timeInMinutes = Math.floor(timer / 60);
     let timeInSeconds: number | string = timer - timeInMinutes * 60;
@@ -303,7 +355,11 @@ const GameBottomNav: React.FC<PropsType> = ({
         [...Array(gameConfig.players)].map((e, i) => {
           return (
             <Player
-              name={`Player ${i + 1}`}
+              name={`${
+                windowDimensions.width > breakpoints.bpLgMobile
+                  ? "Player "
+                  : "P"
+              }${i + 1}`}
               score={playerScore[`player${i + 1}`]}
               key={i}
               isActive={i + 1 === currentPlayer}

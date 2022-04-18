@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { breakpoints } from "../../constants";
 
 interface PropsType {
   text: string;
@@ -15,6 +16,10 @@ const StyledButton = styled.button`
   width: 100px;
   font-weight: 700;
   cursor: pointer;
+
+  @media (max-width: ${breakpoints.bpLgMobile}px) {
+    padding: 11px 0;
+  }
 `;
 
 const PillButton: React.FC<PropsType> = ({ text, className, onClick }) => {

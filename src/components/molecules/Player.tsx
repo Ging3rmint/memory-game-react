@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { colors } from "../../constants";
+import { colors, breakpoints } from "../../constants";
 
 interface PropsType {
   name: string;
@@ -45,6 +45,10 @@ const StyledDiv = styled.div`
 
     > p {
       display: block;
+
+      @media (max-width: ${breakpoints.bpTablet}px) {
+        display: none;
+      }
     }
   }
 
@@ -58,6 +62,15 @@ const StyledDiv = styled.div`
       align-items: center;
       position: relative;
 
+      @media (max-width: ${breakpoints.bpTablet}px) {
+        display: block;
+      }
+
+      @media (max-width: ${breakpoints.bpTablet}px) {
+        text-align: center;
+        padding: 9px 13px;
+      }
+
       &:before {
         content: "";
         position: absolute;
@@ -70,6 +83,18 @@ const StyledDiv = styled.div`
         left: 50%;
         margin-left: -20px;
         display: none;
+
+        @media (max-width: ${breakpoints.bpTablet}px) {
+          border-width: 0 12px 12px;
+          top: -12px;
+          margin-left: -12px;
+        }
+
+        @media (max-width: ${breakpoints.bpTablet}px) {
+          border-width: 0 8px 8px;
+          top: -8px;
+          margin-left: -8px;
+        }
       }
 
       > span {
@@ -77,9 +102,18 @@ const StyledDiv = styled.div`
         font-size: 18px;
         font-weight: 700;
 
+        @media (max-width: ${breakpoints.bpTablet}px) {
+          font-size: 15px;
+        }
+
         &:last-of-type {
           color: ${colors.yankeesBlue};
           font-size: 32px;
+
+          @media (max-width: ${breakpoints.bpTablet}px) {
+            font-size: 24px;
+            display: block;
+          }
         }
       }
     }

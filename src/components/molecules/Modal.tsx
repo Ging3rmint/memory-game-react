@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { colors } from "../../constants";
+import { colors, breakpoints } from "../../constants";
 
 interface PropsType {
   children: React.ReactNode;
@@ -14,6 +14,7 @@ const StyledDiv = styled.div`
   right: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: none;
+  z-index: 5;
 
   &.active {
     display: block;
@@ -27,6 +28,10 @@ const StyledDiv = styled.div`
     background-color: ${colors.flashWhite};
     padding: 51px 56px;
     border-radius: 20px;
+
+    @media (max-width: ${breakpoints.bpLgMobile}px) {
+      padding: 32px 24px;
+    }
   }
 `;
 
